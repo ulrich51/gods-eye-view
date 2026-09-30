@@ -47,36 +47,23 @@ export function flyToPreset(viewer, presetName, duration = 3.0) {
 }
 
 /**
- * Set camera to Austin on load with a cinematic fly-in.
- * @returns {Function} Cancels the pending or active startup flight.
+ * Mission-control fork default: France, kept at full-globe altitude instead
+ * of Austin's close cinematic fly-in. The original flyToAustin ended at
+ * 600m over a single point — fine full-screen, but in a small embedded
+ * badge that tight a shot just reads as an indistinct lit patch of ground,
+ * not a recognizable planet. 18,000,000m matches GLOBE_VIEW in
+ * locations.js (keeps the app's own view-scale classifier calling this a
+ * "global" view too), so the whole Earth stays visible.
+ * @returns {Function} No-op: nothing deferred to cancel (single setView, no flyTo).
  */
-export function flyToAustin(viewer) {
-  // Start from a high altitude, then fly down
+export function flyToFrance(viewer) {
   viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(-97.7431, 30.2672, 25000),
+    destination: Cesium.Cartesian3.fromDegrees(2.2137, 46.2276, 18000000),
     orientation: {
       heading: Cesium.Math.toRadians(0),
       pitch: Cesium.Math.toRadians(-90),
       roll: 0.0,
     },
   });
-
-  // Cinematic fly-in after a brief pause
-  const timer = setTimeout(() => {
-    if (viewer.isDestroyed()) return;
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(-97.7431, 30.2672, 600),
-      orientation: {
-        heading: Cesium.Math.toRadians(15),
-        pitch: Cesium.Math.toRadians(-30),
-        roll: 0.0,
-      },
-      duration: 4.0,
-      easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
-    });
-  }, 500);
-  return () => {
-    clearTimeout(timer);
-    if (!viewer.isDestroyed()) viewer.camera.cancelFlight();
-  };
+  return () => {};
 }
