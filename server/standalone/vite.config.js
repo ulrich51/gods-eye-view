@@ -19,5 +19,9 @@ export default defineConfig(({ command, mode }) => {
     host: process.env.HOST,
     port: process.env.PORT,
     command,
+    frameAncestors: (process.env.GEV_FRAME_ANCESTORS || '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
   });
 });

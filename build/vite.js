@@ -10,6 +10,7 @@ export function createBrowserViteConfig({
   host = 'localhost',
   port = 4173,
   command,
+  frameAncestors = [],
 } = {}) {
   return {
     plugins: [cesium(), applicationHtmlPlugin(), ...plugins],
@@ -38,11 +39,23 @@ export function createBrowserViteConfig({
       fs: {
         deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/ENVIRONMENT'],
       },
-      // These headers protect the document containing Provider Settings.
-      headers: {
-        'X-Frame-Options': 'DENY',
-        'Content-Security-Policy': "frame-ancestors 'none'",
-      },
+      // These headers protect the document containing Provider Settings
+      // (clickjacking a user into pasting/submitting API keys via a
+      // framed overlay). Deny-everything by default; frameAncestors is an
+      // explicit opt-in allowlist for a trusted embedder you control (e.g.
+      // a local dashboard on another port) — never a wildcard. X-Frame-
+      // Options is dropped once an allowlist is set: it cannot express
+      // "these specific origins", and a stale DENY would fight the CSP
+      // directive instead of just being redundant with it.
+      headers:
+        frameAncestors.length > 0
+          ? {
+              'Content-Security-Policy': `frame-ancestors 'self' ${frameAncestors.join(' ')}`,
+            }
+          : {
+              'X-Frame-Options': 'DENY',
+              'Content-Security-Policy': "frame-ancestors 'none'",
+            },
     },
     define: {
       'import.meta.env.GOOGLE_MAPS_API_KEY': JSON.stringify(googleApiKey),
