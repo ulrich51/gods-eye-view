@@ -47,14 +47,26 @@ export function createBrowserViteConfig({
       // Options is dropped once an allowlist is set: it cannot express
       // "these specific origins", and a stale DENY would fight the CSP
       // directive instead of just being redundant with it.
+      //
+      // 'Cache-Control': 'no-store' is load-bearing, not cosmetic: verified
+      // in practice that a 304 Not Modified response here drops BOTH
+      // security headers entirely (Vite/connect strips them on the
+      // conditional-GET fast path) — a browser that had already cached an
+      // earlier response (e.g. the deny-all default, before an operator
+      // configures an allowlist) keeps enforcing those stale headers
+      // forever via revalidation, never seeing the new config. no-store
+      // stops the browser from ever reusing a cached copy of this
+      // security-sensitive document, in either direction.
       headers:
         frameAncestors.length > 0
           ? {
               'Content-Security-Policy': `frame-ancestors 'self' ${frameAncestors.join(' ')}`,
+              'Cache-Control': 'no-store',
             }
           : {
               'X-Frame-Options': 'DENY',
               'Content-Security-Policy': "frame-ancestors 'none'",
+              'Cache-Control': 'no-store',
             },
     },
     define: {
